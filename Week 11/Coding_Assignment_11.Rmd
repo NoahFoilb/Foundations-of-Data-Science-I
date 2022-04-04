@@ -1,0 +1,268 @@
+---
+title: "Coding Assignment 11"
+author: "Noah Foilb"
+date: "11/10/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+----------------------------------------------
+# MAKE SURE YOUR CODE IS THOROUGHLY COMMENTED!
+----------------------------------------------
+
+## Part 1: Bar Plots and Mosaic Plots
+
+#### 1. Load the ggplot2 and mosaic libraries
+
+```{r}
+library(ggplot2)
+library(mosaic)
+```
+
+
+
+#### 2. Ask for help on the diamonds data set from the ggplot2 package. Use str() to look at the variables. Display the first 10 rows.  
+
+```{r}
+help(diamonds)
+str(diamonds)
+head(diamonds)
+```
+
+
+
+```{r}
+ggplot(data = diamonds, aes(x = cut)) + geom_bar (aes(fill = color), position = "dodge")
+```
+
+
+
+#### 3a. Create a simple bar plot showing the cut quality of diamonds on the x-axis. Choose a color for the fill.
+
+```{r} 
+ggplot(data = diamonds, aes(x = cut)) +      #Call gg plot 
+  geom_bar(aes(fill = "Quality of Cut")) +   # make bar graph
+  scale_fill_manual(values = c("maroon3"))   # Make color
+
+```
+
+
+
+#### 3b. Create a stacked bar plot showing the cut quality of diamonds on the x-axis that has the fill color dependent on the diamond's color.
+  * Include a title, subtitle, and caption
+  * Remove the y-axis title.
+
+```{r}
+
+ggplot(data = diamonds, aes(x = cut)) +   # Call gg plot
+  geom_bar(aes(fill = color)) +           # make bar graph
+  labs(title = "Quality of Diamonds",caption = "[Dataset from Diamonds file in ggplot2]", x = "Cut", y = NULL)   # Make labels
+
+```
+
+
+
+#### 3c. Recreate the stacked bar plot in step 3b, but modify it to include the position="fill" command. ANSWER THESE QUESTIONS: 
+  * What are the most common colors for Fair-cut diamonds (diamond colors go by letter from D (best) to J (worst)) ? 
+  * What is the least common color for Ideal-cut diamonds? 
+  * What appears to be the most common cut and color combination (this might be hard to judge)?  
+
+```{r}
+ggplot(data = diamonds, aes(x = cut)) + 
+  geom_bar(aes(fill = color),position = "fill") +
+  labs(title = "Quality of Diamonds",caption = "[Dataset from Diamonds file in ggplot2]", x = "Cut", y = NULL)
+
+# Most common colors are F and G
+# Least common colors is J
+# Based on other data the most common cut is ideal and the most common color is G
+```
+
+
+
+#### 3d. Recreate the stacked bar plot in step 3b, but modify it to include the position="dodge" command and change the colors of the bars. You can use a predefined color palette or pick colors of your own. ANSWER THESE QUESTIONS:
+  * What is the most common color and cut combination? 
+  * Do you find it easier to determine the most common color and cut combination using position="fill" (graph 3c) or position="dodge" (graph 3d)?
+  * Once you create your plot, add in this line of code that you might find very helpful for your data science group projects. After you add it, try changing the value for the angle so you can see what it does:
+  theme(axis.text.x = element_text(angle = -45, hjust=0, vjust=1))
+
+```{r}
+ggplot(data = diamonds, aes(x = cut)) +      # call ggplot
+  geom_bar(aes(fill = color),position = "dodge") +     # make bar graph
+  scale_fill_brewer(palette = "Accent") +             # Change color
+  labs(title = "Quality of Diamonds",caption = "[Dataset from Diamonds file in ggplot2]", x = "Cut", y = NULL) +   # Make labels
+  theme(axis.text.x = element_text(angle = -30, hjust=0, vjust=1))     # Change theme
+
+# Most common cut is ideal and color is G
+# this is much easier to tell then poition = fill
+```
+
+
+
+
+#### 4a. Create a mosaic plot in grey-scale that shows the distribution of the color rating within each category of a diamond's cut rating (cut on horizontal axis and color on vertical axis). ANSWER THESE QUESTIONS:
+  * What is the least common cut quality?
+  * What is the most common cut quality? 
+  * What appears to be the most common cut-color combination (this is the largest box in terms of area)?
+
+```{r}
+mosaicplot(data = diamonds, ~ cut + color, color = TRUE, las = 1)
+
+# Lease common was fair cut
+# Most common was ideal
+# Most common cut-color cobination was an ideal G
+```
+
+
+
+
+
+#### 4b. Create a two-way contingency table for cut and color. The contingency table will numerically present the same information as does the mosaic plot in 4a. Make sure you have a column for each value of cut (display color vertically and cut horizontally). ANSWER THIS QUESTION:
+  * What is the most common cut-color combination? 
+  * Do your answers for what is the most common cut-color combination from 3c, 3d, 4a, and 4b agree with each other? Explain. 
+
+```{r}
+table(x = diamonds$cut, y= diamonds$color)  # table of cut vs color
+
+# It was ideal G
+# Yes, THey all display the same data
+```
+
+
+
+
+
+## Part 2: Analyzing text data from two novels by Robert Louis Stevenson
+In this assignment you are asked to do two textual analysis tasks:  
+  * search for individual words using the function grep(), 
+  * create a word cloud, and 
+  * create a bar graph or the most frequently occurring words having positive and negative sentiments. 
+The text to be analyzed comes from two novels by Robert Louis Stevenson - "The Strange Case of Dr. Jekyll and Mr. Hyde" and "Treasure Island".
+For every step in this assignment, you should be able to find very similar blocks of code in notes for Week_11C. 
+
+
+
+
+#### 1. Load the required libraries.
+
+```{r}
+library(gutenbergr)          # to read books from the Gutenberg online library
+library(dplyr)               # to wrangle data, use join functions, pipe operator
+library(tidytext)            # to create tidy data sets with unnest_tokens
+library(wordcloud)           # to create word clouds
+library(RColorBrewer)        # to use prearranged color palettes
+library(textdata) 
+```
+
+
+
+
+#### 2. Read in the two novels "The Strange Case of Dr. Jekyll and Mr. Hyde" and "Treasure Island" by Robert Louis Stevenson. These are books number 43 and 120 in the Gutenberg library.
+  * Store these in a data frame named stevenson. 
+  * Use the function nrow() to confirm that you have 10,003 lines of text. 
+  * Use the function head() to display the first 5 lines. 
+  * Use the function tail() to display the last 5 lines. 
+
+```{r}
+Stevenson <- gutenberg_download(c(43, 120))  # read 2 books into R
+nrow(Stevenson)
+head(Stevenson)
+tail(Stevenson)
+```
+
+
+
+
+
+#### 3. Create a tidy data frame called tidy_stevenson that contains the individual words (unnested tokens) of the two novels without the stop words. 
+
+```{r}
+Tidy_Stevenson <- Stevenson%>%                      # call variables
+  unnest_tokens(output = word, input = text) %>%    # separate into individual words
+  anti_join(stop_words, by = ("word" = "word"))    # anti join
+
+Tidy_Stevenson
+```
+
+
+
+
+
+#### 4. Create a word cloud depicting the 15 most frequently occurring words in tidy_stevenson and display it using a color palette of your choosing. (Do not use the default black palette.) 
+
+```{r}
+Tidy_Stevenson_with_counts <- Tidy_Stevenson %>%    # call variables
+group_by(word) %>%                         # one group for each unique word
+  summarize(.groups = "drop",n = n()) %>%                     # count how many times each word occurs
+  arrange(desc(n))                          # sort groups into descending order by frequency
+  
+Tidy_Stevenson_with_counts
+```
+
+
+```{r}
+Tidy_Stevenson_with_counts %>%           # start with list of unique words and counts
+  with(wordcloud(words = word,         # create word cloud from these words
+                 freq = n,             # based on their frequencies
+                 max.words = 15,              # set max 15 words
+                 colors = brewer.pal(8,"BrBG")))      # change colors
+```
+
+
+
+
+
+#### 5. Create a data frame called nrc_pos_neg that includes all the words in the nrc lexicon that have positive or negative sentiments.    
+  * Use the appropriate functions to display the number of words in this list and the first 10 words in this list with their sentiments.
+ 
+```{r}
+nrc_pos_neg <- get_sentiments("bing")   # call variable
+nrow(nrc_pos_neg)
+head(nrc_pos_neg)
+  
+```
+
+
+
+
+
+
+#### 6. Use the function inner_join() to create a data frame named nrc_pos_neg_in_stevenson that contains all the words in the tidy_stevenson data frame that have positive or negative sentiments. 
+  * Use the appropriate functions to display the number of words in this list and the 20 most frequently occurring words with their sentiments and counts.
+ 
+```{r}
+nrc_pos_neg_in_stevenson <- Tidy_Stevenson_with_counts %>% #call variable
+  inner_join(nrc_pos_neg, by = ("word"= "word")) %>%    # combine the two data sets
+  arrange(desc(n))
+
+nrow(nrc_pos_neg_in_stevenson)
+head(nrc_pos_neg_in_stevenson,20)
+
+```
+
+
+
+
+
+#### 7. Use the function ggplpot() to create side-by-side bar graphs of the top 10 positive words and the top 10 negative words with their frequencies. Color the graphs by sentiment. 
+
+```{r}
+nrc_pos_neg_in_stevenson %>%             # start with the data frame having words & their frequencies
+  group_by(sentiment)  %>%                      # group the words by positive and negative sentiment
+  top_n(10, wt=n) %>%                           # keep only the top 10 words from each sentiment group 
+  ungroup() %>%                                 # break up the groups to have 20 words-frequency entries
+  mutate(word = reorder(word, n)) %>%           # sort these top 10 words in each group by frequency
+  ggplot(aes(word, n, fill = sentiment)) +      # graph these words with color based on sentiment
+  geom_col(show.legend = FALSE) +               # similar to geom_bar() 
+  facet_wrap(~sentiment, scales = "free_y") +   # one graph for each sentiment
+  labs(y = "Contribution to sentiment",         # label y-axis
+       x = NULL)+                              # hide label on x-axis
+  coord_flip()  # flip the graphs to make bars/columns horizontal
+```
+
+
+
+
+

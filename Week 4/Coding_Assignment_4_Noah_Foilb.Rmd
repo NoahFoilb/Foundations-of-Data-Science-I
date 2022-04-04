@@ -1,0 +1,284 @@
+---
+title: "Coding_Assignment_4"
+author: "Noah Foilb"
+date: "9/23/2020"
+output: word_document
+---
+
+
+#### Step 1) Load the nycflights13, dplyr, tidyr, and mosaic libraries.
+  * Once you are sure that these load properly, you can suppress the warnings from appearing in your final knitted output file by changing {r} at the beginning of the code chunck to {r, message=FALSE} if you want.
+
+```{r}
+#load the library's by using the library() function
+
+library(dplyr)
+library(tidyr)
+library(mosaic)
+library(nycflights13)
+```
+
+
+
+
+
+
+
+
+#### Step 2) We will be working with a subset of the flights data frame. Starting with the data frame called flights, create a new data frame called f2 (since this is step 2) that includes all the following eight pieces of information about each flight: month, dep_delay, arr_delay, carrier, origin, dest, air_time, distance. 
+  * As usual, inspect this newly created data frame using ?, str, and head before proceeding. 
+  * Comments are not necessary in this part. 
+
+```{r}
+f2 <- flights %>%
+  select(month,dep_delay,arr_delay,carrier,origin,dest,air_time,distance)
+str(f2)
+f2
+```
+
+
+
+
+
+
+
+
+
+#### Step 3) Starting with data frame f2, create a table showing the number of flights leaving New York City each month, sorted from highest to lowest.
+  * You will need the group_by, summarize, and arrange commands.
+  * Name the column showing the number of flights monthly_flights.
+  * In this step and all subsequent steps, make sure you comment your code to explain what you're doing.
+  * If done correctly, you will find July is the top month for flights with 29,425.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Group_By to arrange the data with relation to the month
+  group_by(month) %>%
+  
+  # Using summarise to be able to count the amount of flights per month
+  summarise(monthly_flights = n()) %>%
+  
+  # Using arrange to be able to set the monthly flights from highest to lowest
+  arrange(desc(monthly_flights))
+
+```
+
+
+
+
+
+
+
+#### Step 4) Starting with data frame f2, create a table that counts the number of flights leaving New York City each month from each airport. Display the month, airport of origin, and the number of flights. Only show months and airports where the number of flights  exceeds 10,000. 
+  * You will need to group_by two different variables and also use summarize, filter, and arrange.
+  * Name the column showing the number of flights monthly_flights.
+  * If done correctly, EWR will have 10,592 flights leaving in May as the top result.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Group_By to arrange the data with relation to the month and the origin
+  group_by(month,origin) %>%
+  
+  # Using summarise to be able to count the amount of flights per month
+  summarise(monthly_flights = n()) %>%
+  
+  # Using Filter to make the table only display the values over 10,000
+  filter(monthly_flights>10000) %>%
+  
+  # Using arrange to be able to set the monthly flights from highest to lowest
+  arrange(desc(monthly_flights))
+```
+
+
+
+
+
+
+
+
+#### Step 5) Starting with data frame f2, create a table showing the fastest air speed (Fastest_speed), slowest air speed (Slowest_speed), and average air speed (Average_speed) for all flights in the f2 data frame where speed is measured in miles per hour (mph). Only include flights for which both air_time and distance are available. 
+  * Use drop_na to remove air_time and distance entries listed as NA
+  * Create a new column called air_speed where you calculate air speed in mph from the distance (reported in miles) and the air_time (reported in minutes). Make sure you convert from minutes to hours!
+  * Within summarise, calculate the fastest, slowest, and average air speed.
+  * If done correctly, max, min, and avg air speeds are 703.4, 76.8, and 394.3 mph.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Drop_Na to drop the values that do not exist so it does not interfere with the data
+  drop_na(air_time,distance)%>%
+  
+  # Using Mutate to be able to create a column names "AirSpeed" as said in the instructions
+  mutate(air_speed = distance/(air_time/60)) %>%
+  
+  # Using Summarize to be able to display the data I want to
+  summarise(
+    
+    #First column: assigning the variable to the max airspeed and rounding it
+    Fastest_speed = round(max(air_speed),1), 
+    
+    #Second column: assigning the variable to the min airspeed and rounding it
+    Slower_speed = round(min(air_speed),1), 
+    
+    #Third column: assigning the variable to the average airspeed and rounding it
+    Average_speed = round(mean(air_speed),1))
+```
+
+
+
+
+
+
+
+
+
+
+
+#### Step 6) Starting with data frame f2, create a table showing all the flights grouped by month for which departure delay is available. For each month, list: the total number of flights having the dep_delay available as Flights_with_dep_delay_info, the number of delayed departures as Delayed_departures, and the percent of delayed flights as Percent_delayed (report percent as a number between 0 and 100). Sort the table from the lowest to highest percentage of delayed departures. 
+  * Use drop_na to remove flights with missing departure delays
+  * Use group_by, summarise, and arrange
+  * Within the summarise command:
+    * use sum or count to find all flights that were delayed (dep_delay>0), and
+    * calculate the Percent_delayed.
+  * If done correctly, September will be the month with the lowest percent of flights with departure delays with 27,122 total flights, 7,815 departure delays, and 28.8% of the flights delayed.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Drop_Na to drop the values that do not exist so it does not interfere with the data
+  drop_na(dep_delay) %>%
+  
+  # Using Group_By to arrange the data with relation to the month
+  group_by(month) %>%
+  
+  # Using Summarize to be able to display the data I want to
+  summarise(
+    
+    #First column: assigning the variable to n() to be able to count the amount of drop delay info available
+    Flights_with_dep_delay_info = n(),
+    
+    #Second column: assigning the variable to count the amount of delayed departed that are >0 to count the ones that matter 
+    Delayed_departures = count(dep_delay > 0 ),
+    
+    #Third column: assigning the varaible to dived Flights_wit.. column by Delated_depar.. column to be able to get the percent
+    Percent_delayed = round(Delayed_departures*100/Flights_with_dep_delay_info,1))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Step 7) Starting with data frame f2, create a table containing all the flights for which both the departure delay and arrival delay are available. In this table, report the total number of such flights as Flights_with_both_delay_info, the number of flights which left late but arrived on time or early as Left_late_but_arrived_early, and the percent that fell into this category as Percent (report percent as a number between 0 and 100).
+  * Use drop_na() to remove flights with missing departure and arrival delays.
+  * Within the summarise command:
+    * use sum or count to find all flights that left late but arrived early (use a logical operator to specify this compound condition), and
+    * calculate the Percent.
+  * If done correctly, there will be 327,346 flights with this info available, 35,442 will have left late but arrived early, and the percent will be 10.8%
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Drop_Na to drop the values that do not exist so it does not interfere with the data
+  drop_na(arr_delay,dep_delay) %>%
+  
+  
+  summarise(
+    
+    #First column: assigning the variable to n() to be able to count the amount of both drop delay info available
+    Flights_with_both_delay_info = n(), 
+    
+    #First column: assigning the variable to n() to be able to count when it is late but arrived on time
+    Left_late_but_arrived_early = count(dep_delay >0 & arr_delay <= 0),
+    
+    #First column: assigning the variable to n() to be able to calculate the percent 
+    Percent = round(Left_late_but_arrived_early*100/Flights_with_both_delay_info,1))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Step 8) Starting with data frame f2, create a table showing the three most popular destinations and the number of flights that flew to each. Provide an appropriate name for the column counting the number of flights.
+  * If done correctly, there will be 17,283 flights to the most popular destination.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  
+  # Using Group_By to arrange the data with relation to the 
+  group_by(dest) %>%
+  
+  # Using summarise to be able to count the number of times flown to the location
+  summarise(Number_of_times_flown_to = n()) %>%
+  
+  # Using arrange to be able to set the Number of times flown to from highest to lowest
+  arrange(desc(Number_of_times_flown_to))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Step 9) Inspect the result of the previous question to identify the most popular destination. Create a table showing the TWO carriers that flew the most fights to this (most popular) destination and the total number of flights they each flew there.
+  * If done correctly, UA will have 6,984 flights and AA 6,059.
+
+```{r}
+# Calling the dataset to be able to manipulate it
+f2 %>%
+  filter(dest == "ORD") %>%
+  
+  # Using Group_By to arrange the data with relation to the 
+  group_by(carrier) %>%
+  
+  # Using summarise to be able to count the number of flights
+  summarise(Number_of_Flights = n()) %>%
+  
+  # Using arrange to be able to set the Number of Flights from highest to lowest
+  arrange(desc(Number_of_Flights))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

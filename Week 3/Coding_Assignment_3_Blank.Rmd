@@ -1,0 +1,191 @@
+---
+title: "Coding Assignment 3"
+author: "Joanna Blanchard/Michael Bradley"
+date: "8/31/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Getting Started. Run the next two code chunks to install your libraries and create a dataset called SW that contains data on Starwars characters
+```{r}
+library(dplyr)
+```
+
+```{r}
+SW <- starwars
+head(SW, 10)
+```
+
+#### 1) Explore the SW dataset using the glimpse() command and answer the following questions. Recall you explored the dataset with str() in Coding Assignmnet 2. You need to decide which you prefer. 
+  * How many numerical variables are in the dataframe (these would be listed as int for integer or dbl for double precision)?
+  * How many character variables (these would be listed as chr)?
+  * How many categorical variables (these would be listed as fct for factor)?
+  * How many rows?
+  * How many columns?
+
+
+
+
+
+
+
+
+#### 2) Use the proper command to create a new dataframe called SW1 that contains only the columns: name, height, mass, hair_color, skin_color, eye_color, birth_year, sex, gender, homeworld, and species. Display the top 10 rows. 
+  * Use the pipe operator to send the SW dataset to the command you need to choose your columns
+  * Your new dataframe should contain 11 columns.
+
+
+
+
+
+
+
+
+#### 3) Starting with SW1, use the proper command to create a new dataframe called SWDroid that only contains characters that are Droids (in other words, the species is Droid). Display the entire dataframe.
+  * Your new dataframe should contain 6 rows.
+
+
+
+
+
+
+
+
+
+#### 4) Starting with SW1, use the proper commands to create a dataframe called SWred containing the names, homeworlds, and species of all characters with red eyes. Display the entire dataframe.
+  * Your new dataframe should contain 5 rows.
+  * If you are having trouble, make sure your commands are in the proper order.
+
+
+
+
+
+
+
+
+
+#### 5) Starting with SW1, use the proper commands to create a dataframe called SWyellow containing the names, eye color, skin color, homeworlds, and species of all characters with yellow eyes OR yellow skin. Display the entire dataframe.
+  * Your new dataframe should contain 13 rows.
+
+
+
+
+
+
+
+
+
+
+#### 6) Make a two-way contingency table of hair and eye color for all characters in the SW1 dataframe.
+  * What is/are the most common combination(s)?
+
+
+
+
+
+
+
+
+
+
+  
+#### 7) Staring with SW1, create a new dataframe called SWage containing only the names and birth years of all of the characters from oldest to youngest. List the 20 oldest characters.
+  * The birth year is listed as the BBY = Before Battle of Yavin, so the oldest character (Yoda) has the largest birth year and the youngest character has the smallest birth year. 
+
+
+
+
+
+
+
+
+
+
+
+#### 8) Starting with SW1, create a new dataframe called SWtall that lists the name, height, and species for all characters over 200 cm in height and shows the tallest character first. 
+  * Your final dataset should have 10 rows showing Yarael Poof is the tallest.
+
+
+
+
+
+
+
+
+
+
+ 
+
+#### 9) Starting with SW1, create a new dataframe called SWstats that includes each character's name, height, mass, and species and includes a new column called BMI (body mass index), where BMI is mass in kg divided by the square of height in meters.
+  * BMI=mass/(height/100)^2
+  * Display the top six rows
+  * If done correctly, Luke Skywalker's BMI is 26.02758
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 10) Round the BMI column in SWstats to 1 decimal place and display the first 6 rows of SWstats.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 11) Staring with SWstats, create a new dataframe called SWstats2 which:
+  * reorders the columns so that the display order is name, height, mass, BMI, species (hint: use the select() command)
+  * renames the column called mass to weight,
+  * and arranges the dataset by decreasing BMI.
+  * Display the top 10 rows. Jabba the Hut should be at the top!
+
+
+
+
+
+
+
+
+
+
+
+
+#### 12) Create a new column in the SWstats2 dataset called bmi_rating where:
+  * characters with a BMI>100 are rated as Obese,
+  * characters with a BMI between 30 and 100 are rated as Heavy, and
+  * characters with a BMI of 30 or below are rated as Normal.
+  * Display the top 15 rows.
+  * If done correctly, Jabba the Hut will be rated Obese, Dud Bolt will be the first character rated as Heavy, and Beru Whitesun lars the first rated as Normal.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

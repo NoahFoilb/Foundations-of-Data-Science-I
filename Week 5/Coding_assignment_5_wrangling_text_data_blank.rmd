@@ -1,0 +1,150 @@
+---
+title: "Coding assignement 5 - wrangling text data"
+author: "Noah Foilb"
+date: "9/29/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+
+Step 0: Load the dplyr library.
+
+```{r}
+# Load the dplyr library
+library(dplyr)
+```
+
+
+Step 1: Download the txt document "Mandela_Nobel_Peace_Prize_Address.txt" from Blackboard to your desktop, then read it into R using readLines(). Store it in a vector called txt_doc.  
+
+```{r}
+# Read in the txt doc
+txt_doc <- readLines("Mandela_Nobel_Peace_Prize_Address.txt")
+```
+
+
+
+
+
+
+Step 2: Display the first 5 "lines" (= paragraphs) of this document.
+
+```{r}
+# Using head to display the first five paragraphs
+head(txt_doc,5)
+```
+
+
+
+
+Step 3: Find the total number of lines and the total number of characters. (Recall that a "line" is not a sentence, but is actually a "paragraph"; that is, a sequence of characters ending with he new line symbol "\n" that is stroed when you type the Enter key.)
+
+```{r}
+# Using Length function to find the amount of lines
+length(txt_doc)
+
+# Find the amount of characters in each line using nchar then summing them together using sum
+sum(nchar(txt_doc))
+```
+
+
+
+
+
+Step 4: Use the "seven step process" that we copied here for you directly from the class notes to transform your character vector of lines (txt_doc) into a data frame of individual words called df1. Just rn this code block as it is. You do not have to create any new code for this step.
+
+```{r}
+t2 <- unlist(strsplit(x = txt_doc, split = " "))     # 4 - separate into words at each blank space
+t3 <- unlist(strsplit(x = t2, split = "\t"))         # 5 - separate at each tab = backslash t
+t4 <-stringr::str_remove_all(t3, "[-.,:/()]")        # 6 - remove specific special character
+t5 <- tolower(t4)                                    # 7 - convert all uppercase letters to lowercase
+df1 <- as.data.frame(t5)                             # 8 - convert character vector to a data frame
+df1 <- df1 %>% rename(word = t5)                     # 9 - change the name of the one variable to word
+df1 <- df1 %>% filter(word != "")                    # 10 - filter out blank words
+```
+
+Step 5: Display the number of words in this data frame and the mean word length (round this to 2 decimal places). Then display the first 20 words in the data frame. (These should be the first 20 words from the original .txt document since the data frame has not been sorted in any way yet.) 
+
+```{r}
+# Call df1 and use pipe 
+df1 %>%
+  
+  # Call Summarize 
+  summarize(
+    
+    # Set Number of words 
+    Number_of_Words = n(),
+    
+    # Set Mean world length and round the mean amount of characters
+    Mean_Word_Length = round(mean(nchar(word)),2))
+```
+
+
+```{r}
+# Display the first 20 values
+head(df1,20)
+```
+
+
+
+
+
+Step 6: Create a new data frame df2 that starts with df1 and includes a new column indicating the length of each word. Then create a second block of code that displays a table listing the number of words of each length. This table should be ordered from longest to shortest words. (Although these directions utilize the word "table", do not use the table() function from R in your code.)
+
+```{r}
+# Set df1 to df2
+df2 <- df1 %>%
+  
+  # Create length of word
+  mutate(Length_of_word = nchar(word))
+
+# Display df2
+head(df2)
+```
+ 
+
+```{r}
+# Call df2
+df2 %>%
+  
+  # Group by gth of word 
+  group_by(Length_of_word) %>%
+  
+  # Summarize group cpunt
+  summarize(group_count = n(),.groups = 'drop') %>%
+  
+  # Reorder table
+  arrange(desc(group_count))
+```
+
+
+
+Step 7: Create a new data frame named df3 that starts with df1 but has only one row for each distinct word along with columns indicating the number of times the word occurs and the number of characters in the word. The rows in this data frame should be ordered by frequency from highest to lowest. Then display a chart that lists the 20 most frequently occurring words with their frequencies and lengths.
+
+```{r}
+# Call df3
+df3 <- df1 %>%
+  
+  # Create length of word
+  mutate(length_of_word = nchar(word)) %>% 
+  
+  # Group by word
+  group_by(word) %>%
+  
+  # Create frequancy and call summarize
+  summarize(frequency_of_occurrence = n(),.groups = 'drop') %>% 
+  
+  # Create length 
+  mutate(length = nchar(word)) %>% 
+  
+  # Re arrange
+  arrange(desc(frequency_of_occurrence)) 
+
+```
+
+
+
+
+
+

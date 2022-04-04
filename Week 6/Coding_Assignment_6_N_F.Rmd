@@ -1,0 +1,346 @@
+---
+title: 'Working with Dates and Times'
+author: "Noah Foilb"
+date: "9/16/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---------------------------------------------------------
+## MAKE SURE YOUR CODE IS PROPERLY COMMENTED THROUGOUT!
+---------------------------------------------------------
+
+#### Start by loading the needed libraries: readr, lubridate, dplyr, and nycflights13
+
+```{r}
+library(readr)
+library(lubridate)
+library(dplyr)
+library(nycflights13)
+```
+
+
+
+## Part 1 Working with dates
+
+#### 1. Store your birthday in a variable called bday. Display bday so that you can see that it is in character format. (See step 1 of code 6A)
+
+```{r}
+# Assign Variable to bday
+bday <- "August 23, 1999"
+
+# Use Str to show structure of bday
+str(bday)
+```
+
+
+
+
+#### 2. Convert your birthday to date format and store it in a variable called birthday. Display birthday so that you can be sure it is in date format. (See step 1 of code 6A)
+
+```{r}
+# Use mdy on bday and assign it to birthday
+birthday <- mdy(bday)
+
+# Use str to show structure of birthday
+str(birthday)
+```
+
+
+
+
+
+#### 3. Display both the abbreviated and unabbreviated day of the week on which you were born!
+
+```{r}
+# Weekday without abbreviation
+wday(birthday,label = TRUE, abbr = FALSE)
+
+# Weekday with abbreviation
+wday(birthday,label = TRUE)
+```
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------
+
+#### For this next part, you will be working with the flights data set from the nycflights13 package. Run the head(flights) and help(flights) commands to remind yourself what flights looks like and what the variables mean. 
+
+```{r}
+head(flights)
+help(flights)
+```
+
+
+
+
+
+
+### Run this code that you saw in the week_6A code in class to create a data frame called flights3 that contains the columns arr_delay and dep_delay, has the original columns of month, day, year, renamed to M, D, and Y, respectively, and uses the make_date command to create a new column called date containing the calendar date in date format. Show the first 6 rows.   
+```{r}
+flights3 <- flights %>% 
+  select(month, day, year, arr_delay, dep_delay) %>% 
+  rename(M=month, D=day, Y=year) %>% 
+  mutate(date=make_date(year=Y, month=M, day=D))
+head(flights3)
+```
+
+
+
+#### 4. Stating with flights3, create a new data frame called flights4 which has columns called dia, mes, and ano (Spanish for day, month, and year), where:
+  * dia is the unabbreviated day of the week (e.g., Monday)
+  * mes is the unabbreviated month (e.g., September)
+  * ano is the year in numeric format (e.g., 2013)
+Display the first 6 rows.
+  * Hint: you will need to use the wday(), month(), and year() commands within a mutate command.
+
+```{r}
+# Assign Variable
+flights4 <- flights3 %>%
+  
+  # Use wday, month, and year functions
+  mutate(dia = wday(date,label = TRUE, abbr = FALSE),mes = month(date, label=TRUE, abbr = FALSE), ano = year(date))
+```
+
+
+
+
+
+
+
+
+#### 5. Group the data in flights4 by dia (day), summarize the data to show the average arrival and departure delays for each dia (day), then display the results in increasing order by average arrival delay. ANSWER THIS QUESTION: What is the best day of the week to fly in NYC and why?
+  * You will either need to use drop_na() or na.rm from inside of the mean() commands to ignore rows for which delay information is not available.
+  * Notice that if you ask for help(flights), the documentation for the flights data frame shown in the help window includes the following explanation:
+    * dep_delay, arr_delay: "Departure and arrival delays, in minutes. Negative times represent early departures/arrivals."
+
+```{r}
+# Assign Variable
+flights4 %>%
+  
+  # Group by day
+  group_by(dia) %>%
+  
+  # Summarize
+  summarize(
+    
+    # Avg arrival delay
+  Avg_Arr_Delay = mean(arr_delay,na.rm = TRUE),
+  
+  # Avg dep delay
+  Avg_Dep_Delay = mean(dep_delay,na.rm = TRUE),
+  .groups = 'drop') %>%
+  
+  # Rearrange order
+  arrange(Avg_Arr_Delay)
+
+# To be able to answer the question, we would need to sum the average delay times and see which one has the lowest. This would be saturday because it has the lowest values in both columns.
+```
+
+
+
+
+
+
+
+
+
+
+
+#### 6. Group the data in flights4 by mes (month) and summarize the data to show the average arrival and departure delays for each mes (month), then display the results in decreasing order by average departure delay.  ANSWER THIS QUESTION: What are the two worst months to fly in NYC and why? 
+  * You will either need to use drop_na() or na.rm from inside of the mean() commands to ignore rows for which delay information is not available.
+
+
+
+```{r}
+# Assign variable
+flights4 %>%
+  
+  # Group by month
+  group_by(mes) %>%
+  
+  # SUmmarize
+  summarize(
+    
+    # Avg Arrival Delay
+  Avg_Arr_Delay = mean(arr_delay,na.rm = TRUE),
+  
+  # Avg dep delay
+  Avg_Dep_Delay = mean(dep_delay,na.rm = TRUE),
+  .groups = 'drop') %>%
+  
+  # Rearrange order
+  arrange(desc(Avg_Dep_Delay))
+
+# To be able to answer the question, we would need to sum the average delay times and see which two are the highest. These would be July and June!
+```
+
+
+
+
+
+
+---------------------------------------
+## Part 2 Join
+
+#### 7. Start out by looking at the first six rows of the flights, airlines, and airports data frames. ANSWER THIS QUESTION: What is the common column in flights and airlines? 
+
+```{r}
+# Look at first six rows
+head(flights)
+head(airlines)
+head(airports)
+
+#The common column is the carrier
+```
+
+
+
+
+
+
+
+
+
+
+#### 8. Create data frame FLIGHTS (use all capitals so that it is different than flights) listing number of flights by each carrier as num_flights, and sort the data from the most flights to least (group_by, summarize, arrange). Display the entire data frame.
+  * If done correctly, you'll have 16 rows with UA as the top carrier with 58,665 flights.
+
+```{r}
+#Assign Variable
+FLIGHTS <- flights %>%
+  
+  # Group by carrier
+  group_by(carrier) %>%
+  
+  # Summarize and find number of flights
+  summarize(num_flights = n(),.groups = 'drop') %>%
+  
+  # Rearrange order
+  arrange(desc(num_flights))
+
+# Display
+print(FLIGHTS)
+```
+
+
+
+
+
+
+
+
+
+
+
+#### 9. Use inner_join to join FLIGHTS and airlines together by their common column so that one can now see the carrier code, the num_flights, and the name of the airline. Name this new data frame flights_by_carrier. Display the entire data frame.
+
+```{r}
+# Join the two data sets using inner join
+flights_by_carrier <- inner_join(FLIGHTS,airlines,by = c("carrier"))
+
+# Display
+print(flights_by_carrier)
+```
+
+
+
+
+
+
+
+
+
+
+#### 10. Create a data frame called Destinations for all flights with an origin of JFK which groups the flights by the destination (dest), summarizes the number of flights to each destination as flights_to_destination, and arranges the destinations by decreasing number of flights. Display the entire data frame.
+  * If done correctly, LAX will be the top destination with 11,262 flights.
+
+
+```{r}
+# Assign Variable
+Destinations <- flights %>%
+  
+  # Filter for JFK
+  filter(origin == "JFK") %>%
+  
+  # Group by dest
+  group_by(dest) %>%
+  
+  # Summarize and find flights to dest
+  summarize(flights_to_destination = n(),.groups = 'drop') %>%
+  
+  # Rearrange order
+  arrange(desc(flights_to_destination))
+
+# Display Results
+print(Destinations)
+```
+
+
+
+
+
+
+
+
+
+#### 10. Join together Destinations and airports to show the names of each destination along with other location data. In Destinations, the common column is called dest, while in airports this column is called faa. Call this data frame Destination_airports. Display the entire data frame. 	
+  * Not all destinations in the Destinations data frame are included in airports. Use the proper join command so that all destinations are displayed even if the name of the airport is unknown.
+  * Your new data frame should still have 70 rows.
+
+
+```{r}
+# Join two data sets using left_ join
+Destination_airport <- left_join(Destinations,airports,by = c("dest" = "faa"))
+
+# Display results
+print(Destination_airport)
+```
+
+
+
+
+
+
+
+
+#### 11. Use the proper R command to display the date and time that you completed this homework assignment!
+
+```{r}
+
+# Hour now
+hour(now())
+
+ # Minute now
+minute(now())
+
+# Seconds now
+second(now())
+
+# Year now
+year(now())
+
+#Month Now
+month(now(), label=TRUE, abbr=FALSE)
+
+# Day of week now
+wday(now(), label=TRUE, abbr=FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+

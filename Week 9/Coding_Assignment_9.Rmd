@@ -1,0 +1,140 @@
+---
+title: "Coding Assignment 9"
+author: "YOUR NAME HERE!"
+date: "ADD IN THE DATE"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+------------------------------------------------
+## MAKE SURE YOUR CODE IS THOROUGHLY COMMENTED!
+------------------------------------------------
+
+#### 1. Load the ggplot2, mosaic, and 
+  * ggplot2 is the library you need for graphing your data and it contains the diamonds data set
+  * mosaic contains the Galton data set which you'll be graphing
+  * mdsr contains the MLB_teams data set which you'll be graphing
+
+
+
+
+
+Exercise #2 is adapted from Exercise 3.1 from your MDSR textbook
+#### 2a. Inspect the first six rows of the data set named Galton from the mosaic package and ask for help on Galton so that you can read the column definitions. 
+
+
+
+
+
+#### 2b. Make a scatterplot of each person's height as a function of their father's height. 
+  * When we say height as a function of father's height, it means that height will be the dependent, or y, variable, and the father's height is the independent, or x, variable.
+
+
+
+
+  
+
+#### 2c. Make the same scatterplot of each person's height as a function of their father's height, but this time color the points based on sex. 
+
+
+
+
+
+
+#### 2d. Notice in the scatterplot with color based on sex that it is impossible to tell if there is overplotting, i.e., the points are plotted on top of each other. Recreate the graphic three times using each of the following techniques which help with overplotting:
+  * make the points really small
+  * keep the points at the original size but make the points transparent so that overplotted points appear darker
+  * keep the points at the original size but add random movement to the points via the position="jitter" specifier. 
+  
+
+
+
+
+
+#### 2e. Make another scatterplot of each person's height as a function of their father's height, but this time separate the  plot into facets by sex. Keep the color dependent on sex. You do not need to include techniques for overplotting. 
+
+
+
+
+
+
+
+#### 2f. Add regression lines to the scatterplot of height as a function of the father's height facetted by sex. Do not include the standard error term. You do not need to include techniques for overplotting.
+
+
+
+
+
+
+#### 2g. Add the following labels to your facetted plot with regression lines:
+  * title: Child's Height a Function of the Father's Height
+  * subtitle: child's height is height as an adult
+  * x-axis label: father's height (in)
+  * y-axis label: child's height (in)
+  * caption: [Based on data from the Galton data set]
+  * legend title: Gender
+
+
+
+
+
+
+
+
+Exercise #3 is adapted from Exercise 3.6 from your MDSR textbook
+
+#### 3a. Inspect the first six rows of the data set named MLB_teams from the mdsr package and ask for help on MLB_teams so that you can read the column definitions
+
+
+
+
+
+#### 3b. Create a scatterplot of attendance as a function of winning percentage. Make the color of each point dependent on the league and the size dependent on year. Add in meaningful axes labels, a title, subtitle, caption, and legend labels.  
+
+
+
+
+
+Exercise #4 uses the diamonds data set in the ggplot2 package
+
+#### 4a. The diamonds data set in the ggplot2 package contains the prices of over 50,000 round cut diamonds. Inspect the first six rows of the data set and ask for help so that you can read the column definitions.  
+
+
+
+
+
+
+#### 4b. To prepare to create a histogram for the price of the diamonds, check the summary statistics for the variable price to get an idea for endpoints and binwidths. 
+
+
+
+
+
+
+
+#### 4c. Create a histogram of diamond price. 
+  * Experiment with the binwidth to find something that adequately shows the distribution of diamond prices without creating too much noise.  
+  * Use scale_x_continuous to add numerical labels to the x-axis that range from 0 to 19,000 with numbers every 1,000 (0, 1000, 2000, 3000, ..., 19000) 
+  * Add in meaningful axes labels, a title, subtitle, and caption.
+
+
+
+
+
+
+#### 4d. Create a density plot for the price of diamonds. Choose a color for the smooth line, and pick an appropriate value for adjust. Use all the same labels from the histogram of price, but remove the label from the y-axis. Keep the scaling of the x-axis the same by using the same scale_x_continuous command that you used in the histogram.  
+
+
+
+
+
+
+
+
+
+
+
+

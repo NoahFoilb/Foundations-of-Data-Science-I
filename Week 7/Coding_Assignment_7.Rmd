@@ -1,0 +1,244 @@
+---
+title: 'Coding Assignment 7'
+author: "Noah Foilb"
+date: "10/13/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---------------------------------------------------------
+## MAKE SURE YOUR CODE IS PROPERLY COMMENTED THROUGOUT!
+---------------------------------------------------------
+
+## Reminders
+
+### Pivot_longer()
+  * pivot_longer() "lengthens" data, increasing the number of rows and decreasing the number of columns.
+  * format pivot_longer(name of data frame,
+                        cols=name(s) of columns to pivot
+                        names_to=name of new column created from the original column names
+                        values_to=name of new column created from the values in the column(s) being pivoted
+                        values_drop_na=FALSE)
+
+### Pivot_wider()
+  * pivot_wider() "widens" data, increasing the number of columns and decreasing the number of rows.
+  * format pivot_wider(name of data frame,
+                        names_from = column to use to get new column headers
+                        values_from = column to use to fill in values for newly created columns)
+
+
+#### 1. Load the tidyr and dplyr libraries
+
+```{r}
+# Load Librarys
+library(dplyr)
+library(tidyr)
+```
+
+
+
+
+
+#### 2. We will be using the data set called USArrests. 
+  * Ask for help on this data set so that you can read about it,
+  * get the dimensions of the data set (rows and columns), and 
+  * print out the first 6 rows.
+
+```{r}
+# Help for USArrest
+help("USArrests")
+
+# Structure which gives dimensions
+str(USArrests)
+
+# Display first six values
+head(USArrests,6)
+```
+
+
+
+
+#### 3. The column UrbanPop displays the percentage of the population in each state that live in an urban area. The other three columns present number of crimes in each category per 100,000 people. Create a new data frame called USCrime that omits the UrbanPop column and keeps the three crime rate columns. Then display the dimension of this new data frame (it should have 50 rows and 3 columns) and diplay first 6 rows of this new data frame.
+
+
+```{r}
+# Assign variable
+USCrime <- USArrests %>%
+  
+  # Select the columns we want
+  select(Murder,Assault,Rape)
+
+# Find Dimensions
+dim(USCrime)
+
+# Display first six values
+head(USCrime)
+```
+
+
+
+
+#### 4. Put USCrime into long format. Name the new data set USCrime_long. Display the first 10 rows of USCrime_long and display the total number of rows using the nrow() command.
+  * The three crimes (murder, assault, and rape) should end up in one column. Name this column "crime".
+  * The arrest rates (the numerical values) should end up in a second column. Name this column "number_per_100000".
+  * If done correctly, Murder will be in the top row with a rate of 13.2 and there will be 150 rows.
+
+```{r}
+# Use Pivot Longer to get new data
+USCrime_long <- pivot_longer(USCrime,cols = Murder:Rape, names_to = "crime", values_to = "number_per_100000")
+
+# Display data
+head(USCrime_long,10)
+```
+
+
+
+
+
+
+#### 5. Create a summary table showing the median state-wide crime rate per 100,000 for each of the three crime categories. Arrange the data from highest to lowest. 
+  * If done correctly, Assault will be in the top row with a median arrest rate of 159 per 100,000
+
+
+```{r}
+# Call the Variable
+USCrime_long %>%
+  
+  # Group by crime
+  group_by(crime)%>%
+  
+  # Use summarise to creaste a summary table and use median on number per 100000 to find the medians
+  summarise(median_arrest = median(number_per_100000),.groups = 'drop') %>%
+  
+  # Arrange in desc order
+  arrange(desc(median_arrest))
+```
+
+
+
+
+
+
+#### 6. We will now be using the data set called fish_encounters. 
+  * Ask for help on this data set so that you can read about it,
+  * get the dimensions of the data set (rows and columns), and 
+  * print out the first 50 rows.
+  * Note that the seen column has the same value of 1 for all rows. This means that the fish was seen.
+
+
+```{r}
+# Use Help to find info about variable
+help("fish_encounters")
+
+# FInd dimensions
+dim(fish_encounters)
+
+# Display first 50 values
+head(fish_encounters,50)
+```
+
+
+
+
+
+
+#### 7. Put fish_encounters into wide format. Call the new data set fish_encounters_wide. Display the entire data set.
+  * The new column headers will come from the column called station
+  * The values will come from the column called seen
+  * You should end up with many cells listed as NA. This means the fish wasn't seen.
+
+```{r}
+# Use pivot longer to make a more detailed data set from fish encounters
+fish_encounters_wide <- pivot_wider(fish_encounters,names_from = "station", values_from = "seen")
+
+# Display data set
+fish_encounters_wide
+```
+
+
+
+
+
+
+
+#### 8. Put fish_encounters into wide format once again, but this time use the values_fill= specifier to put in zeros in all spots that had NAs in the table above. Call the new data set fish_encounters_wide2. Display the entire data set.
+
+
+```{r}
+# Use pivot longer to make a more detailed data set from fish encounters
+fish_encounters_wide2 <- pivot_wider(fish_encounters,names_from = "station", values_from = "seen",values_fill = 0)
+
+# Display data set
+fish_encounters_wide2
+```
+
+
+
+
+
+
+#### 9. Put fish_encounters_wide2 back into long format. Put the stations back into a column called "station", and the values into a column called "fish_observed". Call the new data set fish_encouters_long2. Display the entire data set.
+  * Now, there will be both 1s indicating that the fish was seen and 0s indicating that it was not. 
+  * The first station should be Release
+  * There should be 209 rows. Note that the original fish_encounters table had 114 rows because fish that weren't seen were not recorded.
+
+
+```{r}
+# Assign Variable
+fish_encounters_long2 <- pivot_longer(fish_encounters_wide2,cols = "Release":"MAW", names_to = "station", values_to = "fish_observed")
+
+# Display dataset
+fish_encounters_long2
+```
+
+
+
+
+
+
+#### 10. Use fish_encouters_long2 to create a summary table that groups the data by fish and displays the total number of stations that observed that fish. Arrange the fish from most to least frequently observed.  
+  * If done correctly, fish 4842 will be on top with 11 stations observing the fish.
+
+```{r}
+# Call variable
+fish_encounters_long2 %>%
+  
+  # Group by fish
+  group_by(fish) %>%
+  
+  # Summarize and sum all fish observed
+  summarise(number_of_stations = sum(fish_observed),.groups = 'drop') %>%
+  
+  # Rearrange data
+  arrange(desc(number_of_stations))
+```
+
+
+
+
+
+#### 11. Use fish_encouters_long2 to create a summary table that groups the data by station and displays the number of unique fish species that were observed at each station. Arrange the stations from stations that saw the most to the least number of different species.
+  * If done correctly, station 180_1 will be on top with 19 different species observed.
+
+
+```{r}
+# Call variable
+fish_encounters_long2 %>%
+  
+  # group by station
+  group_by(station) %>%
+  
+  # Summarize and sum all fish observed
+  summarise(number_of_stations = sum(fish_observed),.groups = 'drop') %>%
+  
+  # Rearrange data
+  arrange(desc(number_of_stations))
+```
+
+
+
