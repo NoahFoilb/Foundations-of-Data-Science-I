@@ -1,0 +1,291 @@
+---
+title: "Week 2 Homework"
+author: "Noah Foilb"
+date: "9/4/2020"
+output:
+  word_document: default
+  pdf_document: default
+notes: I use R chunks for each answer, even if code is not needed.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Week 2 Homework
+
+### Working with Excel files
+
+#### 1. Load the libraries to read .csv and .xlsx files (comma-separated variable and Excel files) into R
+
+```{r}
+library(readr)  #this library reads .csv files. 
+library(readxl) #this library reads Excel files
+```
+
+
+
+
+
+
+
+#### 2. Read the Covid-19 Weekly Public Heatlh Report - Raw Data from mass.gov into R.
+  * This is an Excel file
+  * First, download the file from Blackboard to your computer. 
+    *The original file is from mass.gov. If you'd like to view the source, see "Weekly Public Health Report - Raw Data - (Date)" at https://www.mass.gov/info-details/covid-19-response-reporting#covid-19-daily-dashboard-
+  * Next, use the appropriate read command to load the Excel file into R. Include the following:
+    * This file has multiple worksheets. Read in the sheet entitled "City_Town_Data".
+    * There ARE column names in the Excel file
+    * We have to code spaces, * and <5 entries from this spreadsheet as Not Available (NA) data. To do so, add na=c("", "*", "<5") after the sheet= specifications (see the section called Data Import Using read_excel() from the week_2B code).
+    * Use the assignment operator (<-) to name this dataframe covid_data
+
+```{r}
+# This is finding the location of the file and saving that location in Rstudios
+file_covid <- "\\Users\\nofoi\\OneDrive\\Desktop\\R studios Data Science\\Homework\\Noah Foilb Week 2\\MA Covid.xlsx"
+
+# This is executing the loctation previously found and saving it as a data set
+covid_data <- read_excel(file_covid,col_names=TRUE, sheet="City_Town_Data",na=c("", "*", "<5"))
+```
+
+
+
+
+
+
+
+### Data reformatting step
+  * Run this piece of code. It will work as long as your dataframe is named covid_data. The case does matter, so if you named your dataframe Covid_data, it won't work
+  * You're not expected to know what this code does, but comments are added if you're curious
+```{r}
+covid_data <- within(covid_data, {
+   Total_case_count <- as.numeric(Total_case_count) #codes Total_case_count as numeric data
+   Two_Week_Case_Count <- as.numeric(Two_Week_Case_Count) #codes Two_Week_Case_Count as numeric data
+   Average_Daily_Incidence_Rate_per_100000 <- as.numeric(Average_Daily_Incidence_Rate_per_100000) #codes Average_Daily_Incidence_Rate_per_100000 as numeric data
+   Fraction_positive <- as.numeric(Fraction_positive) #codes Fraction_positive as numeric data
+   Relative_Change_in_Case_Count <- factor(Relative_Change_in_Case_Count, levels=c("Lower", "No Change", "Higher")) #codes Relative_Change_in_Case_Count as an ordered factor where in the order Lower<No Change<Higher
+   Change_in_fraction_positivity <- factor(Change_in_fraction_positivity, levels=c("Lower", "No Change", "Higher")) #codes Change_in_fraction_positivity as an ordered factor where in the order Lower<No Change<Higher
+})
+library(dplyr)
+covid_data <- filter(covid_data, City_or_Town!="Unknown"&City_or_Town!="State")
+```
+
+#### 3. Explore the data using the str() command and answer the following questions:
+  * How many numerical (num) variables are in the dataframe?
+  * How many character (chr) variables?
+  * How many categorical variables (Factor)?
+  * How many rows?
+  * How many columns?
+    * Hint: tibble [503 × 18] would mean there are 503 rows and 18 columns
+```{r}
+str(covid_data)    # This gives us the structure of the data set
+
+# There are seven "num" variables, one "chr" variable, and two "factor" variables.
+# There are 305 rows and 10 columns 
+```
+
+
+
+
+
+
+
+
+#### 4. What are the first three cities/towns in the dataframe? What are the last five? Of these eight cities/towns, how many are missing data for the two week case count?
+  * For privacy reason, the state of MA won't report case counts that are <5. Originally, these towns had this entry recorded as <5, but you recoded the entry to NA in your read_excel() command.
+
+```{r}
+# The frist three cities are Abington, Acton, and Acushnet.
+# The last five are Woburn, Worcester, Worthington, Wrentham, and Yarmouth
+# Four are counted as NA
+```
+
+
+
+
+
+
+
+### Exploring numerical variables
+#### 5. Provide a numerical summary of the number of positive tests in the last 14 days (Positive_Tests_Last_14_days)
+
+```{r}
+# By calling the function "summary" and by specifically calling the column heading of Postive_Tests_Last_14_days, we get one column summary
+summary(covid_data$Positive_Tests_Last_14_days)
+```
+
+
+
+
+
+
+
+#### 6. Provide the quantiles for the number of positive tests in the last 14 days (Positive_Tests_Last_14_days)
+
+```{r}
+# By using the function Quantile it given us the quantiles of the data
+quantile(covid_data$Positive_Tests_Last_14_days)
+```
+
+
+
+
+
+
+
+#### 7. What are the five highest two week case counts (Two_Week_Case_Count)?
+
+```{r}
+# By using head to display the first five data, and sort to get the data in order we are able to find the five highesr two week case counts
+head(sort(covid_data$Two_Week_Case_Count,decreasing = TRUE,),5)
+```
+
+
+
+
+
+
+
+### Exploring categorical variables
+ * Before proceeding, recall what are the two categorical (Factor) variables (see question 2). Answer these questions using these categorical variables.
+ 
+#### 8. How many towns had their fraction of positive test results (Change_in_fraction_positivity) higher than last week? Lower? The same?
+
+```{r}
+#By using summary we can find the change in a categorical graph
+summary(covid_data$Change_in_fraction_positivity)
+
+# 148 lower, 131 the same, and 72 higher.
+```
+
+
+
+
+
+
+
+#### 9. How many towns had a decrease in the relative change in case counts (Relative_Change_in_Case_Count)? An increase? No change?
+
+```{r}
+#By using summary we can find the change in a categorical graph
+summary(covid_data$Relative_Change_in_Case_Count)
+
+# 129 lower, 128 the same, and 94 higher
+```
+
+
+
+
+
+
+#### 10. Create a two-way table or a contingency table for the two categorical variables from questions 8 and 9 listing how many times each possible combination of the two values occurs. Do you notice any correlation between these two variables?
+
+```{r}
+#By using table we can find the change in a categorical graph
+table(covid_data$Change_in_fraction_positivity,covid_data$Relative_Change_in_Case_Count)
+
+# there seems to be a strong corelation between the diagnol of this table (LowervsLower, NoChangevsNochange, and HighervsHigher)
+```
+
+
+
+
+
+
+### Working with .csv files
+
+#### 11. The following website provides data on companies in the S&P 500. The data is in the form of a .csv file. Read the data into R.
+  * https://raw.githubusercontent.com/datasets/s-and-p-500-companies-financials/master/data/constituents-financials.csv
+  * First, assign the URL to a variable
+  * Use the proper read statement to read the file into R
+    * The columns DO have column names
+    * Make sure you assign the output from the read statement to a variable name
+
+```{r}
+#assign the URL as a string to the variable
+companies_url <- "https://raw.githubusercontent.com/datasets/s-and-p-500-companies-financials/master/data/constituents-financials.csv"
+
+#inpute the variable into read.csv to aquire the data
+companies_data <- read.csv(companies_url)
+```
+
+
+
+
+
+
+#### 12. What types of variables does the dataset contain (numerical, categorical, etc.), and how many of each type are there?
+
+```{r}
+#Gives the structure of the dataset
+str(companies_data)
+
+#There are four "chr" and ten "num"
+```
+
+
+
+
+
+
+
+#### 13. How many companies are in the dataset (have R report the number of rows)? Does this surprise you?
+
+```{r}
+#Use nrow to find the number of rows
+nrow(companies_data)
+
+#There are 505 which is a lot more companies then I would have thought
+```
+
+
+
+
+
+
+
+#### 14. What are the first three and last three companies in the dataset?
+
+```{r}
+#First three
+head(companies_data,3)
+
+#Last three
+tail(companies_data,3)
+
+#First Three: 3M Company, A.O. Smith Corp and Abbott Laboratories
+#Last Three: Zimmer Biomet Holdings, Zions Cancorp, and Zoetis
+```
+
+
+
+
+
+
+
+#### 15. Produce a numerical summary of the Market Cap.
+  * The column names aren't in a good format for R at the moment. We'll learn more about that later, but for now you'll need to put back quotes around the column names, i.e., `Market Cap`
+    * the backquote should be in upper left of your keyboard
+
+```{r}
+# Use summary to find the summary
+summary(companies_data$`Market.Cap`)
+```
+
+
+
+
+
+
+#### 16. Produce a table showing the number of companies in each Sector in the S&P500 (the column name is Sector)
+
+```{r}
+# use table to make the table
+table(companies_data$Sector)
+```
+
+
+
+
+
+
+
