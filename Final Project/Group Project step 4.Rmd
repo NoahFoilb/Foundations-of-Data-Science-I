@@ -1,0 +1,654 @@
+---
+title: "Group project step 4"
+author: "Craig Hatfield, Mike Natola, Noah Foilb, Brandon Gillis, Angantyr Gautason"
+date: "11/24/2020"
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+library(dplyr)
+library(readxl)
+library(readr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Load the files into Program. MAKE SURE THE EXCEL FILES ARE IN THE SAME FOLDER AS GROUP PROJECT.RMD
+```{r}
+scoring_data_file <- "Scoring.csv"
+scoring_data <- read.csv(scoring_data_file)
+```
+
+```{r}
+coaches_data_file <- "Coaches.csv"
+coaches_data <- read.csv(coaches_data_file)
+```
+
+```{r}
+master_data_file <- "Master.csv"
+master_data <- read.csv(master_data_file)
+```
+
+```{r}
+goalies_data_file <- "Goalies.csv"
+goalies_data <- read.csv(goalies_data_file)
+goalies_data[is.na(goalies_data)] <- 0
+```
+
+```{r}
+awards_players_data_file <- "AwardsPlayers.csv"
+awards_players_data <- read.csv(awards_players_data_file)
+```
+
+
+
+# Make a file to match players to their playerIDs
+```{r}
+                               # Data set with PlayerIDs and names
+
+Players <- master_data %>%                                 # Assign master data to new variable                   
+  select(playerID,                                         # Only keep three columns from master data
+         firstName,                                        # These columns are playerID, firstName, lastName
+         lastName)
+
+                               # Data set with CoachIDs and names
+
+Coaches <- master_data %>%                                 # Assign master data to new variable                   
+  select(coachID,                                          # Only keep three columns from master data
+         firstName,                                        # These columns are playerID, firstName, lastName
+         lastName)
+```
+
+
+
+#1.What player has the most goals,assists and points in thier average season? (Craig)
+```{r}
+                               # Finding the Results
+
+d1ID <- scoring_data %>%                                   # Assign scoring data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(playerID) %>%                                   # Group the data by their player ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  Average_Goal = round(sum(G/n())),                        # Average goals will be the summation of their goals divided by the # of seasons
+  Average_Assists = round(sum(A/n())),                     # Same as ^ but with assists instead
+  Average_Points = round(sum(Pts/n())),) %>%               # Same as ^ but with points instead (Points is the goals + assists)
+  arrange(desc(Average_Points)) %>%                        # Arrange by the most average points
+  na.omit(d1ID)                                            # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of PlayerID      
+
+d1 <- left_join(d1ID,Players,"playerID") %>%               # Join together d1ID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Goals" = Average_Goal,
+         "Average Assists" = Average_Assists,
+         "Average Points" = Average_Points)
+
+
+                               # Displaying Results
+head(d1,20)
+
+
+                               # Making Graph
+
+ggplot(data = d1[1:5,],                                    # Use the top five people from the d1 dataset              
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average Points`,                                    # Y axis is for average points
+  fill = `Average Goals`)) +                               # Fill color with average goals 
+  geom_bar(stat = "identity", 
+  position= "dodge")  +
+  labs(title = "Most Goals, Assists and Points",           # Make title and subtitle
+  subtitle = "In each players average season", 
+  x = "Player",                                            # Make x label and y label
+  y = "Number of Points")
+```
+
+
+
+#2a.What defensemen scored the most points in their average season?  (Craig)
+```{r}
+                               # Finding the Results
+
+d2aID <- scoring_data %>%                                  # Assign scoring data to new variable
+  filter(lgID=="NHL",                                      # Filter data by players who are in the NHL
+  pos=="D") %>%                                            # And players who play defense
+  group_by(playerID) %>%                                   # Group by their playerIds
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  G = round(sum(G/n())),                                   # Average goals will be the summation of their goals divided by the # of seasons
+  A = round(sum(A/n())),                                   # Same as ^ but with assists instead
+  Pts = round(sum(Pts/n())),) %>%                          # Sum up their Points
+  select(                                                  # Selects only the data we want to keep
+  playerID,G,A,Pts) %>%                                    # Only keep playerId, Goals, Assists, and Points
+  arrange(desc(Pts))                                       # Arrange by their points
+
+
+                               # Displaying Names Instead of PlayerID       
+
+d2a <- left_join(d2aID,Players,"playerID") %>%             # Join together d2aID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Goals" = G,
+         "Average Assists" = A,
+         "Average Points" = Pts)
+
+
+                               # Displaying Results
+
+head(d2a,20)
+
+
+                               # Making Graph
+
+ggplot(data = d2a[1:5,],                                   # Use the top five people from the d2a dataset 
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average Points`,                                    # Y axis is for average points
+  fill = `Average Goals`)) +                               # Fill color with the average goals
+  geom_bar(stat = "identity",                               
+  position = "dodge")  +                                    
+  labs(title = "Most Goals, Assists and Points",           # Set title and subtitle
+  subtitle = "In each players average season", 
+  x = "Defensemen",                                            # Set x and y label
+  y = "Number of Points")
+```
+
+
+
+#2b.What experienced defensemen has the best plus/minus?  (Craig)
+```{r}
+                              # Finding the Results
+
+d2bID <- scoring_data %>%                                  # Assign scoring data to new variable
+  rename(plus_minus= "X...") %>%                           # Rename X... (Supposed to be +/-) to plus_minus
+  drop_na(plus_minus) %>%                                  # Get rid of all the Na's in the data set
+  filter(lgID=="NHL",                                      # Filter by players in the NHL
+  pos=="D") %>%                                            # And by players who play defense
+  group_by(playerID) %>%                                   # Group data by their player IDs
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  plus_minus=sum(plus_minus),                              # Plus_minus will be the summation of each players +/- statistic
+  GP=sum(GP))%>%                                           # Amount of games played
+  filter(GP>750) %>%                                       # Experienced players will have at leasted played 750 games by our standards
+  arrange(desc(plus_minus))                                # List by most plus_minus 
+
+
+                               # Displaying Names Instead of PlayerID       
+
+d2b <- left_join(d2bID,Players,"playerID") %>%             # Join together d2bID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep three variables
+         "+/-" = plus_minus,
+         "Games Played" = GP)
+
+
+                               # Displaying Results
+
+head(d2b,20)
+```
+
+
+
+#3. What player has the most goals,assists and points in thier average post-season?
+```{r}
+                               # Finding the Results
+
+d3ID <- scoring_data %>%                                   # Assign scoring data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(playerID) %>%                                   # Group the data by their player ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  Average_Goal = round(sum(PostG/n())),                    # Average goals will be the summation of their goals divided by the # of seasons
+  Average_Assists = round(sum(PostA/n())),                 # Same as ^ but with assists instead
+  Average_Points = round(sum(PostPts/n())),) %>%           # Same as ^ but with points instead (Points is the goals + assists)
+  arrange(desc(Average_Points)) %>%                        # Arrange by the most average points
+  na.omit(d1ID)                                            # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of PlayerID      
+
+d3 <- left_join(d3ID,Players,"playerID") %>%               # Join together d3ID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Post Season Goals" = Average_Goal,
+         "Average Post Season Assists" = Average_Assists,
+         "Average Post Season Points" = Average_Points)
+
+
+                               # Displaying Results
+
+head(d3,20)
+
+
+                               # Making Graph
+
+ggplot(data = d3[1:5,],                                    # Use the top five people from the d3 dataset 
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average Post Season Points`,                        # Y axis is for average post season goals
+  fill = `Average Post Season Goals`)) +                   # Fill color with average post season goals
+  geom_bar(stat = "identity",
+  position= "dodge")  +
+  labs(title = "Most Goals, Assists and Points",           # Set title and subtitle
+  subtitle = "In each players average post season", 
+  x = "Player",                                            # Set x label and y label
+  y = "Number of Points") +
+  theme(axis.text.x = element_text(size = 8))              # Text spacing for names
+```
+
+
+
+#4a. What player has the most goals,assists and points in thier average powerplay per season?
+```{r}
+                               # Finding the Results
+
+d4aID <- scoring_data %>%                                  # Assign scoring data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(playerID) %>%                                   # Group the data by their player ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  PPG = round(sum(PPG/n())),                               # Average goals will be the summation of their goals divided by the # of seasons
+  PPA = round(sum(PPA/n()))) %>%                           # Same as ^ but with assists instead
+  mutate(PPP = PPA + PPG) %>%                              # New Column Called PPP which is PPA + PPG
+  arrange(desc(PPP)) %>%                                   # Arrange by the most average points
+  na.omit(d1ID)                                            # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of PlayerID      
+
+d4a <- left_join(d4aID,Players,"playerID") %>%             # Join together d4aID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Powerplay Goals" = PPG,
+         "Average Powerplay Assists" = PPA,
+         "Average Powerplay Points" = PPP)
+
+
+                               # Displaying Results
+
+head(d4a,20)
+
+
+                               # Making Graph
+
+ggplot(data = d4a[1:5,],                                   # Use the top five people from the d4a dataset 
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average Powerplay Points`,                          # Y axis is for average power play points
+  fill = `Average Powerplay Goals`)) +                     # Fill color with average power play goals
+  geom_bar(stat = "identity", position= "dodge")  +          
+  labs(title = "Most Powerplay Goals, Assists and Points", # Set title and subtitle
+  subtitle = "In each players average season", 
+  x = "Player",                                            # Set x label and y label
+  y = "Number of Points") +
+  theme(axis.text.x = element_text(size = 8))              # Fix names spacing
+```
+
+
+#4b. What player has the most goals,assists and points in thier average Penatly Kill per season?
+```{r}
+                               # Finding the Results
+
+d4bID <- scoring_data %>%                                  # Assign scoring data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(playerID) %>%                                   # Group the data by their player ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  SHG = round(sum(SHG/n())),                               # Average goals will be the summation of their goals divided by the # of seasons
+  SHA = round(sum(SHA/n()))) %>%                           # Same as ^ but with assists instead
+  mutate(SHP = SHA + SHG) %>%                              # New Column Called PPP which is PPA + PPG
+  arrange(desc(SHP)) %>%                                   # Arrange by the most average points
+  na.omit(d4bID)                                           # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of PlayerID      
+
+d4b <- left_join(d4bID,Players,"playerID") %>%             # Join together d4aID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Shorthand Goals" = SHG,
+         "Average Shorthand Assists" = SHA,
+         "Average Shorthand Points" = SHP)
+
+
+                               # Displaying Results
+
+head(d4b,20)
+
+
+                               # Making Graph
+
+ggplot(data = d4b[1:5,],                                   # Use the top five people from the d4b dataset 
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average Shorthand Points`,                          # Y asix is for average shorthand points
+  fill = `Average Shorthand Goals`)) +                     # Fill color with average shorthand goals
+  geom_bar(stat = "identity", 
+  position= "dodge")  +
+  labs(title = "Most Goals, Assists and Points",           # Set title and subtitle
+  subtitle = "In each players average season", 
+  x = "Player",                                            # Set x label and y label
+  y = "Number of Points")
+```
+
+
+
+#5. What coaches has the most wins in their average season, post season and all time?
+```{r}
+                               # Finding the Results
+
+d5ID <- coaches_data %>%                                   # Assign coaches data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(coachID) %>%                                    # Group the data by their coach ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  W = round(sum(w/n())),                                   # Average win will be the summation of their win divided by the # of seasons
+  postw = round(sum(postw/n()))) %>%                       # Same as ^ but with Post Season wins instead
+  mutate(ATW = W + postw) %>%                              # New Column Called ATW which is W + PostW
+  arrange(desc(ATW)) %>%                                   # Arrange by the most average points
+  na.omit(d5ID)                                            # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of coachID      
+
+d5 <- left_join(d5ID,Coaches,"coachID") %>%                # Join together d5ID with Coaches dataset to replace CoachID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Seasonal Wins" = W,
+         "Average Post-Season Wins" = postw,
+         "Average All Time Wins" = ATW)
+
+
+                               # Displaying Results
+
+head(d5,20)
+
+
+                               # Making Graph
+
+ggplot(data = d5[1:5,],                                    # Use the top five people from the d5 dataset 
+  aes(x = Name,                                            # X axis is for the names
+  y = `Average All Time Wins`,                             # Y asix is for average all time wins
+  fill = `Average Seasonal Wins`)) +                       # Fill color with average seasonal wins
+  geom_bar(stat = "identity", 
+  position= "dodge")  +
+  labs(title = "Most Wins",                                # Set title and subtitle
+  subtitle = "In each coaches average season", 
+  x = "Coach",                                             # Set x label and y label
+  y = "Total Number of Wins")
+```
+
+
+
+#6a. What goalie has the most wins in their average season, post season and all time?
+```{r}
+                               # Finding the Results
+
+d6aID <- goalies_data %>%                                  # Assign goalies data to new variable
+  filter(lgID=="NHL")%>%                                   # Filter data by players who are in the NHL
+  group_by(playerID) %>%                                   # Group the data by their player ID
+  summarise(.groups = "drop",                              # Fix the ungrouping output error
+  W = round(sum(W/n())),                                   # Average win will be the summation of their win divided by the # of seasons
+  PostW = round(sum(PostW/n()))) %>%                       # Same as ^ but with Post Season wins instead
+  mutate(ATW = W + PostW) %>%                              # New Column Called ATW which is W + PostW
+  arrange(desc(ATW))                                       # Arrange by the most average points
+                                                           # Omit all Na's in dataset
+
+
+                               # Displaying Names Instead of playerID     
+
+d6a <- left_join(d6aID,Players,"playerID") %>%             # Join together d6aID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%             # Join together the first and last name in the Players
+  select("Name" = Name,                                    # Keep four variables
+         "Average Seasonal Wins" = W,
+         "Average Post-Season Wins" = PostW,
+         "Average All Time Wins" = ATW)
+
+
+                               # Displaying Results
+
+head(d6a,20)
+
+
+                               # Making Graph
+
+ggplot(data = d6a[1:5,],                                   # Select top 5 people from d6a dataset
+  aes(x = Name,                                            # x axis is for the names 
+  y = `Average All Time Wins`,                             # Y axis is for average all time wins
+  fill = `Average Seasonal Wins`)) +                       # Fill color with average seasonal wins
+  geom_bar(stat = "identity", 
+  position= "dodge")  +
+  labs(title = "Most Wins",           # Set title and subtitle
+  subtitle = "In each players average season", 
+  x = "Goalies",                                            # Set x label and y label
+  y = "Total Number of Wins")
+```
+
+
+
+#6b. What experienced goalies have the best Save percent of all time?
+```{r}
+                               # Finding the Results
+
+d6bID <- goalies_data%>%                                    # Assign goalies data to new variable
+  drop_na(SA) %>%                                           # Drop all the Na's
+  filter(lgID=="NHL") %>%                                   # Filtered only NHL players
+  group_by(playerID) %>%                                    # Grouped by playerID
+  summarise(.groups = "drop",                               # Fix the ungrouping output error
+  GP=sum(GP),                                               # Sum up the games played
+  GA=sum(GA),                                               # Sum up goals against
+  SA=sum(SA),                                               # Sum up shots against
+  SV = round((1-GA/SA)*100,2)) %>%                          # Create the percent saved 
+  filter(GP>500)%>%                                         # Filtered by games played to get the most expeirenced goalies
+  arrange(desc(SV))                                         # Arrange in descending value
+
+
+                               # Displaying Names Instead of playerID     
+
+d6b <- left_join(d6bID,Players,"playerID") %>%              # Join together d6bID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%              # Join together the first and last name in the Players
+  select("Name" = Name,                                     # Keep three variables
+         "Games Played" = GP,
+         "Save Percent (%)" = SV)
+
+
+                               # Displaying Results
+
+head(d6b,20)
+```
+
+
+
+#7. What experienced player took the least amount of penalites?
+
+```{r}
+                               # Finding the Results
+
+d7ID <- scoring_data %>%                                    # Use scoring data
+  group_by(playerID) %>%                                    # Group by playerID
+  filter(lgID=="NHL",pos != "G") %>%                        # Show only NHL players and non goalies
+  summarise(.groups = "drop",                               # Fix the ungrouping output error
+  PIM=sum(PIM),                                             # Penalty minutes
+  GP=sum(GP))%>%                                            # Games played
+  filter(GP>750) %>%                                        # Players have to play at least 750 games
+  arrange(PIM)                                              #arrange by PIM
+
+
+                               # Displaying Names Instead of playerID     
+
+d7 <- left_join(d7ID,Players,"playerID") %>%                # Join together d7ID with Players dataset to replace PlayerID with their names
+  mutate(Name = paste(firstName,lastName)) %>%              # Join together the first and last name in the Players
+  select("Name" = Name,                                     # Keep three variables
+         "Games Played" = GP,
+         "Penalty Minutes" = PIM)
+
+
+                               # Displaying Results
+
+head(d7,20)
+```
+
+
+
+#8. Who are the greatest players of all time based off of Awards they recieved?  (Noah)
+```{r}
+                               # Finding the Results
+
+d8ID <- awards_players_data %>%                             # Assign awards_player_data to new variable
+  group_by(playerID) %>%                                    # Group by their player ID
+  filter(lgID == "NHL") %>%                                 # Filter for those who are in the NHL
+  summarise(.groups = 'drop',                               # Fix the ungrouping output error                     
+  Number_of_Awards = sum(n())) %>%                          # "#" of awards is the sum of awards given to a player
+  arrange(desc(Number_of_Awards))                           # Arrange by highest amount of awards
+
+
+                               # Displaying Names Instead of playerID     
+  
+d8 <- left_join(d8ID,Players,"playerID") %>%                # Join together d8ID with Players dataset to replace the playerIDs with their names
+  mutate(Name = paste(firstName,lastName)) %>%              # Join together the first and last name in the Players
+  select("Name" = Name,                                     # Keep two variables
+         "Number of Awards"=Number_of_Awards)                 
+
+
+                               # Display Results     
+
+head(d8,50)
+```
+
+#9. What are the ages of NHL players in the middle of their career? Find the standard deviation or third quartile for each position.
+
+
+```{r}
+                               # Finding the Results
+
+d9ID <- master_data %>%                                     # Assign Master Data to new variable
+  select(playerID,                                          # Only keep PlayerID, firstNHL, LastNHL
+  firstNHL,                                                 # Birthyear and position
+  lastNHL,
+  birthYear,
+  pos,) %>%
+  na.omit(firstNHL,lastNHL) %>%                             # Omit all Na values
+  mutate(
+  Age = round((firstNHL + lastNHL)*.5) - birthYear) %>%     # Find age by taking their average NHL career and subtract by their birthyear 
+  select(playerID,                                          # Only keep PlayerID, Age, and Position
+  Age,
+  pos) %>%
+  filter(pos != "D/L",                                      # Get rid of outliers 
+  pos != "F",
+  pos != "L/D",
+  pos != "L/C" )
+
+
+                               # Find the 3rd Quartile (The average 3rd quartile is 27)
+
+AgeID <- d9ID %>%                                           # Assign d9ID to new variable
+  group_by(pos) %>%                                         # Group by their position
+  summarise(.groups = "drop",                               # Fix the ungrouping output error
+  "3rd Quartile" = quantile(Age))                           # Find Quartile stats
+AgeID <- AgeID[c(4,9,14,19,24),]                            # Only Keep the third Quartile
+
+
+
+d9ID$pos[d9ID$pos == "C"] <- "Center"                       # Replace C with Center
+d9ID$pos[d9ID$pos == "D"] <- "Defense"                      # Replace D with Defense
+d9ID$pos[d9ID$pos == "L"] <- "Left Wing"                    # Replace L with Left Wing
+d9ID$pos[d9ID$pos == "R"] <- "Right Wing"                   # Replace R with Right Wing
+d9ID$pos[d9ID$pos == "G"] <- "Goalie"                       # Replace G with Goalie
+  
+  
+ggplot(d9ID,aes(Age)) +                                     # Create ggplot from d9ID with AES age
+geom_histogram(binwidth = 1,aes(color = pos)) +             # Make it a histogram with bandwidth 1 and color based off position
+facet_wrap(~pos)+                                           # Make separate graphs for each position 
+facet_grid(~pos) +                                          # Make the graphs side by side
+labs(title = "NHL Player Ages [1917 - 2011]",               # Create title and subtitle
+subtitle = "How old each player in the middle of their career", 
+y = "Number of People",                                     # Set x,y title
+x = "Age", color = "Position") +                            # set legend to be position
+scale_x_continuous(breaks = seq(0, 60, by = 10))            # Set frequency of ticks
+
+```
+
+
+#10 Who would we want on our team
+
+```{r}
+                               # Finding Final Results
+
+d10PID <- full_join(d1ID[,1],d2aID[,1],"playerID")          # d10PID (The P stands for players)
+d10PID <- full_join(d10PID,d2bID[,1],"playerID")            # Get each playerID that was top 50 for any category
+d10PID <- full_join(d10PID,d3ID[,1],"playerID")             # Only keep the playerID
+d10PID <- full_join(d10PID,d4aID[,1],"playerID")
+d10PID <- full_join(d10PID,d4bID[,1],"playerID")
+d10PID <- full_join(d10PID,d7ID[,1],"playerID")
+d10PID <- full_join(d10PID,d8ID[,1],"playerID")
+                                                              
+d10PID <- full_join(d10PID,d1ID[1:50,1:2],"playerID")       # Find the stats of each player in the list made before^
+d10PID <- full_join(d10PID,d2aID[1:50,1:2],"playerID")      # If the player did now make top 50 for a category we will be making the na
+d10PID <- full_join(d10PID,d2bID[1:50,1:2],"playerID")      # into a 0. If they did we will be making it into a 1.
+d10PID <- full_join(d10PID,d3ID[1:50,1:2],"playerID")       # We will tally up the stats for each player to see 
+d10PID <- full_join(d10PID,d4aID[1:50,1:2],"playerID")      # Which good players were the most balanced.
+d10PID <- full_join(d10PID,d4bID[1:50,1:2],"playerID")      # We favor those who are top 50 in multiple categories rather then 
+d10PID <- full_join(d10PID,d7ID[1:50,1:2],"playerID")       # Those who are only number one in a category 
+d10PID <- full_join(d10PID,d8ID[1:50,1:2],"playerID")
+d10PID[,2:9][!is.na(d10PID[,2:9])] <- 1                     # Make one if they are in top 50 for each category
+d10PID[,2:9][is.na(d10PID[,2:9])] <- 0                      # Make zero if they are not in top 50 
+
+d10PID <- cbind(d10PID, "Top" = rowSums(d10PID[,2:9])) %>%  # Use cbind to sum up the rows of ones for each player
+select(playerID,"Top")                                      # Only keep the player ID and the summation of the Top 50s
+
+d10PID <- left_join(d10PID,d9ID,"playerID")                 # Combine the dataset with the file that has their ages and position
+
+
+                               # Best/Balanced Players
+# Centers
+d10CID <- d10PID %>%                                        # Assign d10pID to d10CID (C stands for center)
+  filter(pos == "Center", Age <= 27) %>%                    # Only use centers and those ages of 27 and lower (Found in part 9)
+  arrange(desc(Top)) %>%                                    # Arrange by the most top 50
+  head(3) %>%                                               # Only keep Top 3
+  select(playerID,pos)                                      # Only keep the variables playerID and Position
+
+# Left Wings
+d10LWID <- d10PID %>%                                       # Assign d10pID to d10LWID (LW stands for Left Wing)
+  filter(pos == "Left Wing", Age <= 27) %>%                 # Only use centers and those ages of 27 and lower (Found in part 9)
+  arrange(desc(Top)) %>%                                    # Arrange by the most top 50
+  head(3) %>%                                               # Only keep Top 3
+  select(playerID,pos)                                      # Only keep the variables playerID and Position
+
+# Right Wings
+d10RWID <- d10PID %>%                                       # Assign d10pID to d10RWID (RW stands for Right Wing)
+  filter(pos == "Right Wing", Age <= 27) %>%                # Only use centers and those ages of 27 and lower (Found in part 9)
+  arrange(desc(Top)) %>%                                    # Arrange by the most top 50
+  head(3) %>%                                               # Only keep Top 3
+  select(playerID,pos)                                      # Only keep the variables playerID and Position
+
+# Defense
+d10DID <- d10PID %>%                                        # Assign d10pID to d10DID (D stands for Defense)
+  filter(pos == "Defense", Age <= 27) %>%                   # Only use centers and those ages of 27 and lower (Found in part 9)
+  arrange(desc(Top)) %>%                                    # Arrange by the most top 50
+  head(6) %>%                                               # Only keep Top 6
+  select(playerID,pos)                                      # Only keep the variables playerID and Position
+
+# First Goalie 
+d10G1ID <- d6aID[1,1]                                       # Find the goalie with the most wins
+d10G1ID[1,2]<- "Goalie"                                     # Assign Position to Goalie
+
+# Second Goalie
+d10G2ID <- d6bID[1,1]                                       # Find the goalie with the highest save Percent
+d10G2ID[1,2]<- "Goalie"                                     # Assign Position to Goalie
+
+# Coach
+d10ID <- d5[1,1]                                            # Find the best coach
+
+
+# Team Roster
+d10 <- d10CID[1:3,1:2]                                      # Combine the data into one team Roster
+d10[4:6,1:2] <- d10LWID[1:3,1:2] 
+d10[7:9,1:2] <- d10RWID[1:3,1:2]
+d10[10:15,1:2] <- d10DID[1:6,1:2]
+d10[16,1:2] <- d10G1ID
+d10[17,1:2] <- d10G2ID
+
+# Replace all player IDs with their actual names
+d10 <- left_join(d10,Players,"playerID") %>%               # Combine players with d10
+  mutate(Name = paste(firstName,lastName)) %>%             # Make a name column
+  select("Name" = Name, "Position" = pos)                  # Only keep their name and Position 
+
+# Coach Roster
+d10[18,1] <- d10ID                                         # Add coach to roster
+d10[18,2] <- "Coach"
+
+# Display results
+head(d10,18)
+```
